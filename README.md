@@ -1,5 +1,5 @@
 # shadow
-Run a shadow clone of your system parallely with Docker
+Run shadow clones of your system parallely with Docker
 
 **!! USE AT YOUR OWN RISK !!**
 
@@ -48,7 +48,7 @@ This starts the shadow system from beginning (may cause tty conflict)
 sudo shadow /sbin/init
 ```
 
-Run some dangerous commands withoud hurting your actuall system
+Run some dangerous commands withoud actually hurting your system
 ```
 sudo shadow rm -rf / --no-preserve-root
 ```
