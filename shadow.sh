@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Define colors
 YELLOW="\033[0;93m"
 GREEN="\033[0;32m"
