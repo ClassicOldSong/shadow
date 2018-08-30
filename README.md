@@ -53,5 +53,10 @@ Run some dangerous commands withoud hurting your actuall system
 sudo shadow rm -rf / --no-preserve-root
 ```
 
+Keep environment after container detatched
+```
+sudo KEEP_SHADOW_ENV=1 shadow [CMD...]
+```
+
 ## License
 MIT
