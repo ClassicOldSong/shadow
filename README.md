@@ -18,14 +18,14 @@ sudo shadow [CMD...]
 ```
 
 ## Flag(s)
-| Flag            | Description                                | Default                  |
-| --------------- | ------------------------------------------ | ------------------------ |
-| KEEP_SHADOW_ENV | Set to keep the shadow environment         | (not set)                |
-| IGNORE_LIST     | Paths not to be mounted into a container   | dev proc sys             |
-| CLEAR_LIST      | Paths to clear before container starts     | /mnt /run /boot /var/run |
-| SHADOW_IMG      | Name of the image to be used as base       | shadow                   |
-| SHADOW_PERFIX   | Perfix of the shadow container             | SHADOW-                  |
-| SHADOW_DIR      | Directory where all shadow env files saves | .shadow                  |
+| Flag            | Description                               | Default            |
+| --------------- | ----------------------------------------- | ------------------ |
+| KEEP_SHADOW_ENV | Set to keep the shadow environment        | (not set)          |
+| IGNORE_LIST     | Paths not to be mounted into a container  | dev proc sys       |
+| CLEAR_LIST      | Paths to clear before container starts    | /mnt /run /var/run |
+| SHADOW_IMG      | Name of the image to be used as base      | shadow             |
+| SHADOW_PERFIX   | Perfix of the shadow container            | SHADOW-            |
+| SHADOW_DIR      | Directory where all shadow env file saves | .shadow            |
 
 ## Example
 This enters a shadow shell

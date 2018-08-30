@@ -9,7 +9,7 @@ NC="\033[0m"
 ROOT_LIST=`ls /`
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
 IGNORE_LIST=${IGNORE_LIST:="dev proc sys"}
-CLEAR_LIST=${CLEAR_LIST:="/mnt /run /boot /var/run"}
+CLEAR_LIST=${CLEAR_LIST:="/mnt /run /var/run"}
 SHADOW_IMG=${SHADOW_IMG:="shadow"}
 SHADOW_PERFIX=${SHADOW_PERFIX:="SHADOW-"}
 SHADOW_DIR=${SHADOW_DIR:=".shadow"}
