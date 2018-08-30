@@ -7,21 +7,25 @@ Run a shadow clone of your system parallely with Docker
 - Linux kernel with OverlayFS support
 - Docker
 
-## Installation
-``` shell
-git clone https://github.com/ClassicOldSong/shadow.git /tmp/shadow
-sudo cp /tmp/shadow/shadow.sh /usr/bin/shadow
-sudo chmod 755 /usr/bin/shadow
-rm -rf /tmp/shadow
+## Installation/Upgrade
+```
+curl -L https://git.io/fAnmd | sh
 ```
 
 ## Usage
 ```
-sudo shadow [CMD]
+sudo shadow [CMD...]
 ```
 
 ## Flag(s)
-`KEEP_SHADOW_ENV` Keep the shadow environment
+| Flag            | Description                                | Default                  |
+| --------------- | ------------------------------------------ | ------------------------ |
+| KEEP_SHADOW_ENV | Set to keep the shadow environment         | (not set)                |
+| IGNORE_LIST     | Paths not to be mounted into a container   | dev proc sys             |
+| CLEAR_LIST      | Paths to clear before container starts     | /mnt /run /boot /var/run |
+| SHADOW_IMG      | Name of the image to be used as base       | shadow                   |
+| SHADOW_PERFIX   | Perfix of the shadow container             | SHADOW-                  |
+| SHADOW_DIR      | Directory where all shadow env files saves | .shadow                  |
 
 ## Example
 This enters a shadow shell
