@@ -109,14 +109,19 @@ startDocker () {
 	echo $SHADOW_NAME > $SHADOW_LOCK
 
 	echo -e "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
-	docker run --name $SHADOW_NAME --rm --privileged --hostname $SHADOW_NAME -it `extractVolume $ROOT_LIST` $SHADOW_IMG "$@"
+	docker run -it --rm --privileged \
+		-w $PWD \
+		--name $SHADOW_NAME \
+		--hostname $SHADOW_NAME \
+		`extractVolume $ROOT_LIST` \
+		$SHADOW_IMG "$@"
 	echo -e "\n${GREEN}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<${NC}"
 }
 
 # Args
 # Show version
 if [ "$1" == "--version" ]; then
-	echo "Shadow v0.1"
+	echo "Shadow v0.1.1"
 	exit
 fi
 
