@@ -8,6 +8,7 @@ NC="\033[0m"
 
 ROOT_LIST=`ls /`
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
+START_AS=${START_AS:=$SUDO_USER}
 IGNORE_LIST=${IGNORE_LIST:="dev proc sys"}
 CLEAR_LIST=${CLEAR_LIST:="/mnt /run /var/run"}
 SHADOW_IMG=${SHADOW_IMG:="shadow"}
@@ -36,6 +37,12 @@ extractVolume () {
 		[[ $IGNORE_LIST =~ (^|[[:space:]])$DIR($|[[:space:]]) ]] \
 		&& continue \
 		|| echo -n "-v $SHADOW_MERGED/$DIR:/$DIR "
+	done
+}
+
+extractGroups () {
+	for GROUP in `id $START_AS -G`; do
+		echo -n "--group-add $GROUP "
 	done
 }
 
@@ -111,6 +118,8 @@ startDocker () {
 	echo -e "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
 	docker run -it --rm --privileged \
 		-w $PWD \
+		-u `id $START_AS -u`:`id $START_AS -g` \
+		`extractGroups` \
 		--name $SHADOW_NAME \
 		--hostname $SHADOW_NAME \
 		`extractVolume $ROOT_LIST` \
@@ -121,7 +130,7 @@ startDocker () {
 # Args
 # Show version
 if [ "$1" == "--version" ]; then
-	echo "Shadow v0.1.1"
+	echo "Shadow v0.1.2"
 	exit
 fi
 

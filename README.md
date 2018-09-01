@@ -21,6 +21,7 @@ sudo shadow [CMD...]
 | Flag            | Description                               | Default            |
 | --------------- | ----------------------------------------- | ------------------ |
 | KEEP_SHADOW_ENV | Set to keep the shadow environment        | (not set)          |
+| START_AS        | Start as given username                   | (current user)     |
 | IGNORE_LIST     | Paths not to be mounted into a container  | dev proc sys       |
 | CLEAR_LIST      | Paths to clear before container starts    | /mnt /run /var/run |
 | SHADOW_IMG      | Name of the image to be used as base      | shadow             |
