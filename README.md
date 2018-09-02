@@ -16,15 +16,17 @@ curl -L https://git.io/fAnmd | sh
 
 ## Usage
 ```
-sudo shadow [PARAMS...] [CMD...]
+sudo shadow [ARGS...] [CMD...]
 ```
 
 ## Params
-| Params                       | Description                               | Default            |
+| Arguments                    | Description                               | Default            |
 | ---------------------------- | ----------------------------------------- | ------------------ |
 | -h, --help                   | Show help message                         | N/A                |
 | -v, --version                | Show version of Shadow                    | N/A                |
 | -C, --clean                  | Clear shadow env in current directory     | N/A                |
+| -s, --start                  | Start shadow env from Shadowfile          | N/A                |
+| -g, --generate               | Generate a Shadowfile                     | N/A                |
 | -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |
 | -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |
 | -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |
@@ -35,6 +37,8 @@ sudo shadow [PARAMS...] [CMD...]
 | -I, --img, SHADOW_IMG        | Name of the image to be used as base      | shadow             |
 | -p, --perfix, SHADOW_PERFIX  | Perfix of the shadow container            | SHADOW-            |
 | -d, --shadow-dir, SHADOW_DIR | Directory where all shadow env file saves | .shadow            |
+
+**NOTE:** `--clean`, `--start` and `--generate` should always be put at the end of the arguments, otherwise other arguments won't be parsed.
 
 ## Example
 This enters a shadow shell
@@ -65,6 +69,16 @@ sudo shadow rm -rf / --no-preserve-root
 Keep environment after container detatched
 ```
 sudo shadow --keep [CMD...]
+```
+
+Generate a `Shadowfile`
+```
+shadow [ARGS...] -g
+```
+
+Start shadow from `Shadowfile`
+```
+sudo shadow [ARGS...] -s
 ```
 
 ## License

@@ -8,7 +8,7 @@ NC="\033[0m"
 
 CMD_NAME=$0
 ROOT_LIST=`ls /`
-SHADOW_VERSION="v0.2.0"
+SHADOW_VERSION="v0.2.1"
 
 QUIET=${QUIET:=""}
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
@@ -92,7 +92,7 @@ prepareEnv () {
 	cEcho "Tmp mounted"
 	mount -t tmpfs tmpdocker -osize=2g $SHADOW_DOCKER
 	cEcho "Docker mounted"
-	cEcho "This mounts an empty fs to $SHADOW_DOCKER, otherwise will cause problems"
+	cEcho "This mounts an tmpfs to $SHADOW_DOCKER, otherwise docker inside shadow won't start"
 
 	if [ "SHADOW_EXISTS" != "0" ]; then
 		clearDirs $CLEAR_LIST
@@ -180,13 +180,15 @@ showVersion () {
 
 # Show help
 showHelp () {
-	echo "Usage: shadow [PARAMS...] [CMD...]"
+	echo "Usage: shadow [ARGS...] [CMD...]"
 	echo
 	echo "| Params                       | Description                               | Default            |"
 	echo "| ---------------------------- | ----------------------------------------- | ------------------ |"
 	echo "| -h, --help                   | Show help message                         | N/A                |"
 	echo "| -v, --version                | Show version of Shadow                    | N/A                |"
 	echo "| -C, --clean                  | Clear shadow env in current directory     | N/A                |"
+	echo "| -s, --start                  | Start shadow env from Shadowfile          | N/A                |"
+	echo "| -g, --generate               | Generate a Shadowfile                     | N/A                |"
 	echo "| -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |"
 	echo "| -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |"
 	echo "| -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |"
@@ -206,13 +208,14 @@ showHelp () {
 
 # Clean current shadow env
 cleanShadow () {
+	# Refresh shadow dirs before cleaning
+	refreshDirs
+
 	if [ "$SHADOW_EXISTS" != "0" ]; then
 		cEcho "Shadow not exists, exit"
 		exit
 	fi
 
-	# Refresh shadow dirs before cleaning
-	refreshDirs
 	if [  -f "$SHADOW_LOCK" ]; then
 		cEcho "Stopping container..."
 		docker kill `cat $SHADOW_LOCK` > /dev/null 2> /dev/null
@@ -225,7 +228,7 @@ cleanShadow () {
 startShadow () {
 	if [ ! -f "$SHADOW_FILE" ]; then
 		cEcho "$SHADOW_FILE not found, exit"
-		exit
+		exit 1
 	fi
 
 	cEcho "Starting shadow with $SHADOW_FILE..."
@@ -233,6 +236,33 @@ startShadow () {
 	# Refresh shadow dirs after shadowfile loaded
 	refreshDirs
 	runContainer "${CMD[@]}"
+	exit
+}
+
+generateShadowfile () {
+	if [ -f "$SHADOW_FILE" ]; then
+		echo "$SHADOW_FILE exists, remove it before generating a new one."
+		exit 1
+	fi
+
+	echo -e \
+"#!/bin/bash\
+\n\
+\nQUIET=\"$QUIET\"\
+\nKEEP_SHADOW_ENV=\"$KEEP_SHADOW_ENV\"\
+\nSTART_USER=\"$START_USER\"\
+\nWORK_DIR=\"$WORK_DIR\"\
+\nIGNORE_LIST=\"$IGNORE_LIST\"\
+\nCLEAR_LIST=\"$CLEAR_LIST\"\
+\nSHADOW_FILE=\"$SHADOW_FILE\"\
+\nSHADOW_IMG=\"$SHADOW_IMG\"\
+\nSHADOW_PERFIX=\"$SHADOW_PERFIX\"\
+\nSHADOW_DIR=\"$SHADOW_DIR\"\
+\nCMD=(\"bash\" \"-c\" \"echo \\\"Change the CMD section of the $SHADOW_FILE to your custom command\\\"\")
+" > $SHADOW_FILE
+
+	# Start the editor which user specified
+	${EDITOR:-vim} $SHADOW_FILE
 	exit
 }
 
@@ -254,6 +284,9 @@ case $key in
 	;;
 	-s|--start)
 	startShadow
+	;;
+	-g|--generate)
+	generateShadowfile
 	;;
 	-q|--quiet)
 	QUIET="YES"
