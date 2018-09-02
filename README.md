@@ -7,6 +7,7 @@ Run shadow clones of your system parallely with Docker
 - Linux kernel with OverlayFS support
 - Docker
 - Bash
+- Git (Only for installation)
 
 ## Installation/Upgrade
 ```
@@ -15,20 +16,25 @@ curl -L https://git.io/fAnmd | sh
 
 ## Usage
 ```
-sudo shadow [CMD...]
+sudo shadow [PARAMS...] [CMD...]
 ```
 
-## Flag(s)
-| Flag            | Description                               | Default            |
-| --------------- | ----------------------------------------- | ------------------ |
-| KEEP_SHADOW_ENV | Set to keep the shadow environment        | (not set)          |
-| START_AS        | Start as given username or uid            | 0 (root)           |
-| WORK_DIR        | Working directory                         | (pwd)              |
-| IGNORE_LIST     | Paths not to be mounted into a container  | dev proc sys       |
-| CLEAR_LIST      | Paths to clear before container starts    | /mnt /run /var/run |
-| SHADOW_IMG      | Name of the image to be used as base      | shadow             |
-| SHADOW_PERFIX   | Perfix of the shadow container            | SHADOW-            |
-| SHADOW_DIR      | Directory where all shadow env file saves | .shadow            |
+## Params
+| Params                       | Description                               | Default            |
+| ---------------------------- | ----------------------------------------- | ------------------ |
+| -h, --help                   | Show help message                         | N/A                |
+| -v, --version                | Show version of Shadow                    | N/A                |
+| -C, --clean                  | Clear shadow env in current directory     | N/A                |
+| -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |
+| -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |
+| -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |
+| -w, --work-dir, WORK_DIR     | Working directory                         | (pwd)              |
+| -i, --ignore, IGNORE_LIST    | Paths not to be mounted into a container  | dev proc sys       |
+| -c, --clear, CLEAR_LIST      | Paths to clear before container starts    | /mnt /run /var/run |
+| -f, --file, SHADOW_FILE      | Filename of the shadowfile                | Shadowfile         |
+| -I, --img, SHADOW_IMG        | Name of the image to be used as base      | shadow             |
+| -p, --perfix, SHADOW_PERFIX  | Perfix of the shadow container            | SHADOW-            |
+| -d, --shadow-dir, SHADOW_DIR | Directory where all shadow env file saves | .shadow            |
 
 ## Example
 This enters a shadow shell
@@ -48,7 +54,7 @@ sudo shadow python
 
 This starts the shadow system from beginning (may cause tty conflict)
 ```
-sudo WORK_DIR=/ shadow /sbin/init
+sudo shadow -w / /sbin/init
 ```
 
 Run some dangerous commands withoud actually hurting your system
@@ -58,7 +64,7 @@ sudo shadow rm -rf / --no-preserve-root
 
 Keep environment after container detatched
 ```
-sudo KEEP_SHADOW_ENV=1 shadow [CMD...]
+sudo shadow --keep [CMD...]
 ```
 
 ## License

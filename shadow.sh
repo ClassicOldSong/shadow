@@ -6,28 +6,50 @@ CYAN="\033[0;36m"
 RED="\033[0;31m"
 NC="\033[0m"
 
+CMD_NAME=$0
 ROOT_LIST=`ls /`
+SHADOW_VERSION="v0.2.0"
+
+QUIET=${QUIET:=""}
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
-START_AS=${START_AS:="0"}
+START_USER=${START_USER:="0"}
 WORK_DIR=${WORK_DIR:=$PWD}
 IGNORE_LIST=${IGNORE_LIST:="dev proc sys"}
 CLEAR_LIST=${CLEAR_LIST:="/mnt /run /var/run"}
+SHADOW_FILE=${SHADOW_FILE:="Shadowfile"}
 SHADOW_IMG=${SHADOW_IMG:="shadow"}
 SHADOW_PERFIX=${SHADOW_PERFIX:="SHADOW-"}
 SHADOW_DIR=${SHADOW_DIR:=".shadow"}
-SHADOW_ROOT="$PWD/$SHADOW_DIR"
-SHADOW_MERGED="$SHADOW_ROOT/merged"
-SHADOW_UPPER="$SHADOW_ROOT/upper"
-SHADOW_WORK="$SHADOW_ROOT/workdir"
-SHADOW_LOCK="$SHADOW_ROOT/.shadowlock"
-SHADOW_TMP="$SHADOW_MERGED/tmp"
-SHADOW_DOCKER="$SHADOW_MERGED/var/lib/docker"
+SHADOW_ROOT=""
+SHADOW_MERGED=""
+SHADOW_UPPER=""
+SHADOW_WORK=""
+SHADOW_LOCK=""
+SHADOW_TMP=""
+SHADOW_DOCKER=""
+SHADOW_EXISTS=""
 
-ls $SHADOW_ROOT > /dev/null 2> /dev/null
-SHADOW_EXISTS=$?
+eEcho () {
+	if [ "$QUIET" == "" ]; then
+		echo -e "$@"
+	fi
+}
 
 cEcho () {
-	echo -e "${CYAN}[SHADOW]${NC} $*"
+	eEcho "${CYAN}[SHADOW]${NC} $*"
+}
+
+refreshDirs () {
+	SHADOW_ROOT="$PWD/$SHADOW_DIR"
+	SHADOW_MERGED="$SHADOW_ROOT/merged"
+	SHADOW_UPPER="$SHADOW_ROOT/upper"
+	SHADOW_WORK="$SHADOW_ROOT/workdir"
+	SHADOW_LOCK="$SHADOW_ROOT/.shadowlock"
+	SHADOW_TMP="$SHADOW_MERGED/tmp"
+	SHADOW_DOCKER="$SHADOW_MERGED/var/lib/docker"
+
+	ls $SHADOW_ROOT > /dev/null 2> /dev/null
+	SHADOW_EXISTS=$?
 }
 
 # contains method from:
@@ -42,7 +64,7 @@ extractVolume () {
 }
 
 extractGroups () {
-	for GROUP in `id $START_AS -G`; do
+	for GROUP in `id $START_USER -G`; do
 		echo -n "--group-add $GROUP "
 	done
 }
@@ -103,66 +125,194 @@ detatched () {
 	fi
 }
 
-attachDocker () {
-	echo -e "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+attachContainer () {
+	eEcho "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
 	docker attach `cat $SHADOW_LOCK`
-	echo -e "\n${GREEN}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<${NC}"
+	eEcho "\n${GREEN}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<${NC}"
 }
 
-startDocker () {
+startContainer () {
 	cEcho "Starting shadow environment..."
 	cEcho "${YELLOW}Detatch with sequence Ctrl+P, Ctrl+Q${NC}"
 
 	SHADOW_NAME=$SHADOW_PERFIX$RANDOM
 	echo $SHADOW_NAME > $SHADOW_LOCK
 
-	echo -e "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
+	eEcho "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
 	docker run -it --rm --privileged \
 		-w $WORK_DIR \
-		-u `id $START_AS -u`:`id $START_AS -g` \
+		-u `id $START_USER -u`:`id $START_USER -g` \
 		`extractGroups` \
 		--name $SHADOW_NAME \
 		--hostname $SHADOW_NAME \
 		`extractVolume $ROOT_LIST` \
 		$SHADOW_IMG "$@"
-	echo -e "\n${GREEN}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<${NC}"
+	eEcho "\n${GREEN}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<${NC}"
+}
+
+runContainer () {
+	# Ask whether to attach if shadow is running
+	if [ -f "$SHADOW_LOCK" ]; then
+		# Prompt script from:
+		# https://stackoverflow.com/questions/226703/how-do-i-prompt-for-yes-no-cancel-input-in-a-linux-shell-script
+		cEcho "Shadow in this dir is already running, attatch?"
+		select yn in "Yes" "No"; do
+			case $yn in
+				Yes ) attachContainer; break;;
+				No ) exit;;
+			esac
+		done
+	else
+		prepareEnv
+		startContainer "$@"
+	fi
+
+	# Run detatched after all kinds of attachment
+	detatched
 }
 
 # Args
 # Show version
-if [ "$1" == "--version" ]; then
-	echo "Shadow v0.1.3"
+showVersion () {
+	echo "Shadow $SHADOW_VERSION"
 	exit
-fi
+}
 
 # Show help
-if [ "$1" == "--help" ]; then
-	echo "Usage: shadow [CMD...]"
+showHelp () {
+	echo "Usage: shadow [PARAMS...] [CMD...]"
 	echo
-	echo "  --version  Print out version of Shadow"
-	echo "  --clear    Clear shadow env in current directory"
-	echo "  --help     Print out this message"
+	echo "| Params                       | Description                               | Default            |"
+	echo "| ---------------------------- | ----------------------------------------- | ------------------ |"
+	echo "| -h, --help                   | Show help message                         | N/A                |"
+	echo "| -v, --version                | Show version of Shadow                    | N/A                |"
+	echo "| -C, --clean                  | Clear shadow env in current directory     | N/A                |"
+	echo "| -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |"
+	echo "| -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |"
+	echo "| -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |"
+	echo "| -w, --work-dir, WORK_DIR     | Working directory                         | (pwd)              |"
+	echo "| -i, --ignore, IGNORE_LIST    | Paths not to be mounted into a container  | dev proc sys       |"
+	echo "| -c, --clear, CLEAR_LIST      | Paths to clear before container starts    | /mnt /run /var/run |"
+	echo "| -f, --file, SHADOW_FILE      | Filename of the shadowfile                | Shadowfile         |"
+	echo "| -I, --img, SHADOW_IMG        | Name of the image to be used as base      | shadow             |"
+	echo "| -p, --perfix, SHADOW_PERFIX  | Perfix of the shadow container            | SHADOW-            |"
+	echo "| -d, --shadow-dir, SHADOW_DIR | Directory where all shadow env file saves | .shadow            |"
 	echo
 	echo "Read more at https://github.com/ClassicOldSong/shadow/blob/master/README.md"
 	echo
 	echo "Report bugs at https://github.com/ClassicOldSong/shadow/issues/new"
 	exit
-fi
+}
 
-# Clear current shadow env
-if [ "$1" == "--clear" ]; then
+# Clean current shadow env
+cleanShadow () {
 	if [ "$SHADOW_EXISTS" != "0" ]; then
 		cEcho "Shadow not exists, exit"
 		exit
 	fi
 
+	# Refresh shadow dirs before cleaning
+	refreshDirs
 	if [  -f "$SHADOW_LOCK" ]; then
 		cEcho "Stopping container..."
-		docker kill `cat $SHADOW_LOCK` > /dev/null
+		docker kill `cat $SHADOW_LOCK` > /dev/null 2> /dev/null
 	fi
 	detatched
 	exit
-fi
+}
+
+# Start with Shadowfile
+startShadow () {
+	if [ ! -f "$SHADOW_FILE" ]; then
+		cEcho "$SHADOW_FILE not found, exit"
+		exit
+	fi
+
+	cEcho "Starting shadow with $SHADOW_FILE..."
+	. $SHADOW_FILE
+	# Refresh shadow dirs after shadowfile loaded
+	refreshDirs
+	runContainer "${CMD[@]}"
+	exit
+}
+
+# Parse arguments:
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+	-h|--help)
+	showHelp
+	;;
+	-v|--version)
+	showVersion
+	;;
+	-C|--clean)
+	cleanShadow
+	;;
+	-s|--start)
+	startShadow
+	;;
+	-q|--quiet)
+	QUIET="YES"
+	shift
+	;;
+	-k|--keep)
+	KEEP_SHADOW_ENV="YES"
+	shift
+	;;
+	-u|--user)
+	START_USER=$2
+	shift
+	shift
+	;;
+	-w|--work-dir)
+	WORK_DIR=$2
+	shift
+	shift
+	;;
+	-i|--ignore)
+	IGNORE_LIST=$2
+	shift
+	shift
+	;;
+	-c|--clear)
+	CLEAR_LIST=$2
+	shift
+	shift
+	;;
+	-f|--file)
+	SHADOW_FILE=$2
+	shift
+	shift
+	;;
+	-I|--img)
+	SHADOW_IMG=$2
+	shift
+	shift
+	;;
+	-p|--perfix)
+	SHADOW_PERFIX=$2
+	shift
+	shift
+	;;
+	-d|--shadow-dir)
+	SHADOW_DIR=$2
+	shift
+	shift
+	;;
+	*)
+	if [[ $key == -* ]]; then
+		echo "Unknown parameter \"$key\". Show help with \"$CMD_NAME --help\""
+		exit 1
+	else
+		break
+	fi
+	;;
+esac
+done
 
 # Check if this is a shadow already
 echo $HOSTNAME | grep "^$SHADOW_PERFIX" > /dev/null
@@ -189,21 +339,7 @@ if [ "$?" != "0" ]; then
 	cEcho "Build complete"
 fi
 
-# Ask whether to attach if shadow is running
-if [ -f "$SHADOW_LOCK" ]; then
-	# Prompt script from:
-	# https://stackoverflow.com/questions/226703/how-do-i-prompt-for-yes-no-cancel-input-in-a-linux-shell-script
-	cEcho "Shadow in this dir is already running, attatch?"
-	select yn in "Yes" "No"; do
-	    case $yn in
-	        Yes ) attachDocker; break;;
-	        No ) exit;;
-	    esac
-	done
-else
-	prepareEnv
-	startDocker "$@"
-fi
-
-# Run detatch after all kinds of attachment
-detatched
+# Refresh shadow dirs
+refreshDirs
+# Start container
+runContainer "$@"
