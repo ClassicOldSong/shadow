@@ -62,7 +62,7 @@ This starts the shadow system from beginning (may cause tty conflict)
 sudo shadow -w / /sbin/init
 ```
 
-Run some dangerous commands withoud actually hurting your system
+Run some dangerous commands without actually hurting your system
 ```
 sudo shadow rm -rf / --no-preserve-root
 ```
