@@ -8,7 +8,8 @@ NC="\033[0m"
 
 ROOT_LIST=`ls /`
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
-START_AS=${START_AS:=$SUDO_USER}
+START_AS=${START_AS:="0"}
+WORK_DIR=${WORK_DIR:=$PWD}
 IGNORE_LIST=${IGNORE_LIST:="dev proc sys"}
 CLEAR_LIST=${CLEAR_LIST:="/mnt /run /var/run"}
 SHADOW_IMG=${SHADOW_IMG:="shadow"}
@@ -117,7 +118,7 @@ startDocker () {
 
 	echo -e "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
 	docker run -it --rm --privileged \
-		-w $PWD \
+		-w $WORK_DIR \
 		-u `id $START_AS -u`:`id $START_AS -g` \
 		`extractGroups` \
 		--name $SHADOW_NAME \
@@ -130,7 +131,7 @@ startDocker () {
 # Args
 # Show version
 if [ "$1" == "--version" ]; then
-	echo "Shadow v0.1.2"
+	echo "Shadow v0.1.3"
 	exit
 fi
 
