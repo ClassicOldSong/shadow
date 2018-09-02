@@ -8,7 +8,7 @@ NC="\033[0m"
 
 CMD_NAME=$0
 ROOT_LIST=`ls /`
-SHADOW_VERSION="v0.2.1"
+SHADOW_VERSION="v0.2.2"
 
 QUIET=${QUIET:=""}
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
@@ -100,28 +100,30 @@ prepareEnv () {
 }
 
 detatched () {
-	docker top `cat $SHADOW_LOCK` > /dev/null 2> /dev/null
-	if [ "$?" == "0" ]; then
-		cEcho "Container detatched, re-enter with \"sudo shadow\" in $PWD"
-		cEcho "If you would like to keep the shadow env after another attach, add \"KEEP_SHADOW_ENV\" to the environment virables when attaching."
-		exit
-	fi
+	if [ -f "$SHADOW_LOCK" ]; then
+		docker top `cat $SHADOW_LOCK` > /dev/null 2> /dev/null
+		if [ "$?" == "0" ]; then
+			cEcho "Container detatched, re-enter with \"sudo shadow\" in $PWD"
+			cEcho "If you would like to keep the shadow env after another attach, set KEEP_SHADOW_ENV to \"YES\" to the environment virables when attaching."
+			exit
+		fi
 
-	cEcho "Container stoped"
-	rm -f $SHADOW_LOCK
-	umount -l $SHADOW_DOCKER
-	cEcho "Docker unmounted"
-	umount -l $SHADOW_TMP
-	cEcho "Tmp unmounted"
-	umount -l $SHADOW_MERGED
-	cEcho "Overlay unmounted"
+		cEcho "Container stoped"
+		rm -f $SHADOW_LOCK
+		umount -l $SHADOW_DOCKER
+		cEcho "Docker unmounted"
+		umount -l $SHADOW_TMP
+		cEcho "Tmp unmounted"
+		umount -l $SHADOW_MERGED
+		cEcho "Overlay unmounted"
+	fi
 
 	if [ "$KEEP_SHADOW_ENV" == "" ]; then
 		rm -rf $SHADOW_ROOT
 		cEcho "Temp directory cleared, shadow exited"
 	else
 		cEcho "Shadow exited, shadow env saved"
-		cEcho "If you would like to remove the shadow env after another run, do not add \"KEEP_SHADOW_ENV\" to the environment virables when starting."
+		cEcho "If you would like to remove the shadow env after another run, unset \"KEEP_SHADOW_ENV\" when starting."
 	fi
 }
 
@@ -210,6 +212,8 @@ showHelp () {
 cleanShadow () {
 	# Refresh shadow dirs before cleaning
 	refreshDirs
+	# Set KEEP_SHADOW_ENV empty
+	KEEP_SHADOW_ENV=""
 
 	if [ "$SHADOW_EXISTS" != "0" ]; then
 		cEcho "Shadow not exists, exit"
