@@ -8,6 +8,7 @@ Run shadow clones of your system parallely with Docker
 - Docker
 - Bash
 - Git (Only for installation)
+- Vim (Or other editor $EDITOR sets to)
 
 ## Installation/Upgrade
 ```
