@@ -28,6 +28,7 @@ sudo shadow [ARGS...] [CMD...]
 | -C, --clean                  | Clear shadow env in current directory     | N/A                |
 | -s, --start                  | Start shadow env from Shadowfile          | N/A                |
 | -g, --generate               | Generate a Shadowfile                     | N/A                |
+| -U, --upgrade                | Upgrade shadow to it's latest version     | N/A                |
 | -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |
 | -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |
 | -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |

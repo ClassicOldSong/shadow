@@ -8,7 +8,7 @@ NC="\033[0m"
 
 CMD_NAME=$0
 ROOT_LIST=`ls /`
-SHADOW_VERSION="v0.2.2"
+SHADOW_VERSION="v0.2.3"
 
 QUIET=${QUIET:=""}
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
@@ -184,13 +184,14 @@ showVersion () {
 showHelp () {
 	echo "Usage: shadow [ARGS...] [CMD...]
 
-| Params                       | Description                               | Default            |
+| Arguments                    | Description                               | Default            |
 | ---------------------------- | ----------------------------------------- | ------------------ |
 | -h, --help                   | Show help message                         | N/A                |
 | -v, --version                | Show version of Shadow                    | N/A                |
 | -C, --clean                  | Clear shadow env in current directory     | N/A                |
 | -s, --start                  | Start shadow env from Shadowfile          | N/A                |
 | -g, --generate               | Generate a Shadowfile                     | N/A                |
+| -U, --upgrade                | Upgrade shadow to it's latest version     | N/A                |
 | -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |
 | -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |
 | -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |
@@ -269,6 +270,12 @@ CMD=(\"bash\" \"-c\" \"echo \\\"Change the CMD section of the $SHADOW_FILE to yo
 	exit
 }
 
+upgradeShadow () {
+	cEcho "Upgrading Shadow..."
+	curl -L https://git.io/fAnmd | sh
+	exit
+}
+
 # Parse arguments:
 # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 while [[ $# -gt 0 ]]
@@ -290,6 +297,9 @@ case $key in
 	;;
 	-g|--generate)
 	generateShadowfile
+	;;
+	-U|--upgrade)
+	upgradeShadow
 	;;
 	-q|--quiet)
 	QUIET="YES"
