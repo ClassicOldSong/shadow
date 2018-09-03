@@ -182,29 +182,30 @@ showVersion () {
 
 # Show help
 showHelp () {
-	echo "Usage: shadow [ARGS...] [CMD...]"
-	echo
-	echo "| Params                       | Description                               | Default            |"
-	echo "| ---------------------------- | ----------------------------------------- | ------------------ |"
-	echo "| -h, --help                   | Show help message                         | N/A                |"
-	echo "| -v, --version                | Show version of Shadow                    | N/A                |"
-	echo "| -C, --clean                  | Clear shadow env in current directory     | N/A                |"
-	echo "| -s, --start                  | Start shadow env from Shadowfile          | N/A                |"
-	echo "| -g, --generate               | Generate a Shadowfile                     | N/A                |"
-	echo "| -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |"
-	echo "| -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |"
-	echo "| -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |"
-	echo "| -w, --work-dir, WORK_DIR     | Working directory                         | (pwd)              |"
-	echo "| -i, --ignore, IGNORE_LIST    | Paths not to be mounted into a container  | dev proc sys       |"
-	echo "| -c, --clear, CLEAR_LIST      | Paths to clear before container starts    | /mnt /run /var/run |"
-	echo "| -f, --file, SHADOW_FILE      | Filename of the shadowfile                | Shadowfile         |"
-	echo "| -I, --img, SHADOW_IMG        | Name of the image to be used as base      | shadow             |"
-	echo "| -p, --perfix, SHADOW_PERFIX  | Perfix of the shadow container            | SHADOW-            |"
-	echo "| -d, --shadow-dir, SHADOW_DIR | Directory where all shadow env file saves | .shadow            |"
-	echo
-	echo "Read more at https://github.com/ClassicOldSong/shadow/blob/master/README.md"
-	echo
-	echo "Report bugs at https://github.com/ClassicOldSong/shadow/issues/new"
+	echo "Usage: shadow [ARGS...] [CMD...]
+
+| Params                       | Description                               | Default            |
+| ---------------------------- | ----------------------------------------- | ------------------ |
+| -h, --help                   | Show help message                         | N/A                |
+| -v, --version                | Show version of Shadow                    | N/A                |
+| -C, --clean                  | Clear shadow env in current directory     | N/A                |
+| -s, --start                  | Start shadow env from Shadowfile          | N/A                |
+| -g, --generate               | Generate a Shadowfile                     | N/A                |
+| -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |
+| -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |
+| -u, --user, START_USER       | Start as given username or uid            | 0 (root)           |
+| -w, --work-dir, WORK_DIR     | Working directory                         | (pwd)              |
+| -i, --ignore, IGNORE_LIST    | Paths not to be mounted into a container  | dev proc sys       |
+| -c, --clear, CLEAR_LIST      | Paths to clear before container starts    | /mnt /run /var/run |
+| -f, --file, SHADOW_FILE      | Filename of the shadowfile                | Shadowfile         |
+| -I, --img, SHADOW_IMG        | Name of the image to be used as base      | shadow             |
+| -p, --perfix, SHADOW_PERFIX  | Perfix of the shadow container            | SHADOW-            |
+| -d, --shadow-dir, SHADOW_DIR | Directory where all shadow env file saves | .shadow            |
+
+Read more at https://github.com/ClassicOldSong/shadow/blob/master/README.md
+
+Report bugs at https://github.com/ClassicOldSong/shadow/issues/new"
+
 	exit
 }
 
@@ -249,20 +250,18 @@ generateShadowfile () {
 		exit 1
 	fi
 
-	echo -e \
-"#!/bin/bash\
-\n\
-\nQUIET=\"$QUIET\"\
-\nKEEP_SHADOW_ENV=\"$KEEP_SHADOW_ENV\"\
-\nSTART_USER=\"$START_USER\"\
-\nWORK_DIR=\"$WORK_DIR\"\
-\nIGNORE_LIST=\"$IGNORE_LIST\"\
-\nCLEAR_LIST=\"$CLEAR_LIST\"\
-\nSHADOW_FILE=\"$SHADOW_FILE\"\
-\nSHADOW_IMG=\"$SHADOW_IMG\"\
-\nSHADOW_PERFIX=\"$SHADOW_PERFIX\"\
-\nSHADOW_DIR=\"$SHADOW_DIR\"\
-\nCMD=(\"bash\" \"-c\" \"echo \\\"Change the CMD section of the $SHADOW_FILE to your custom command\\\"\")
+	echo "#!/bin/bash
+
+QUIET=\"$QUIET\"
+KEEP_SHADOW_ENV=\"$KEEP_SHADOW_ENV\"
+START_USER=\"$START_USER\"
+WORK_DIR=\"$WORK_DIR\"
+IGNORE_LIST=\"$IGNORE_LIST\"
+CLEAR_LIST=\"$CLEAR_LIST\"
+SHADOW_IMG=\"$SHADOW_IMG\"
+SHADOW_PERFIX=\"$SHADOW_PERFIX\"
+SHADOW_DIR=\"$SHADOW_DIR\"
+CMD=(\"bash\" \"-c\" \"echo \\\"Change the CMD section of the $SHADOW_FILE to your custom command\\\"\")
 " > $SHADOW_FILE
 
 	# Start the editor which user specified
