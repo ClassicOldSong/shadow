@@ -40,8 +40,6 @@ sudo shadow [ARGS...] [CMD...]
 | -p, --perfix, SHADOW_PERFIX  | Perfix of the shadow container            | SHADOW-            |
 | -d, --shadow-dir, SHADOW_DIR | Directory where all shadow env file saves | .shadow            |
 
-**NOTE:** `--clean`, `--start` and `--generate` should always be put at the end of the arguments, otherwise other arguments won't be parsed.
-
 ## Example
 This enters a shadow shell
 ```
@@ -81,6 +79,11 @@ shadow [ARGS...] -g
 Start shadow from `Shadowfile`
 ```
 sudo shadow [ARGS...] -s
+```
+
+Start shadow from `myShadowfile`
+```
+sudo shadow [ARGS...] -f myShadowfile -s
 ```
 
 ## License

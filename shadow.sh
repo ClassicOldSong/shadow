@@ -8,7 +8,7 @@ NC="\033[0m"
 
 CMD_NAME=$0
 ROOT_LIST=`ls /`
-SHADOW_VERSION="v0.2.3"
+SHADOW_VERSION="v0.2.4"
 
 QUIET=${QUIET:=""}
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
@@ -26,7 +26,6 @@ SHADOW_UPPER=""
 SHADOW_WORK=""
 SHADOW_LOCK=""
 SHADOW_TMP=""
-SHADOW_DOCKER=""
 SHADOW_EXISTS=""
 
 eEcho () {
@@ -46,7 +45,6 @@ refreshDirs () {
 	SHADOW_WORK="$SHADOW_ROOT/workdir"
 	SHADOW_LOCK="$SHADOW_ROOT/.shadowlock"
 	SHADOW_TMP="$SHADOW_MERGED/tmp"
-	SHADOW_DOCKER="$SHADOW_MERGED/var/lib/docker"
 
 	ls $SHADOW_ROOT > /dev/null 2> /dev/null
 	SHADOW_EXISTS=$?
@@ -90,9 +88,6 @@ prepareEnv () {
 	cEcho "Overlay mounted at $SHADOW_ROOT"
 	mount -t tmpfs tmpfs -orw,nosuid,nodev $SHADOW_TMP
 	cEcho "Tmp mounted"
-	mount -t tmpfs tmpdocker -osize=2g $SHADOW_DOCKER
-	cEcho "Docker mounted"
-	cEcho "This mounts an tmpfs to $SHADOW_DOCKER, otherwise docker inside shadow won't start"
 
 	if [ "SHADOW_EXISTS" != "0" ]; then
 		clearDirs $CLEAR_LIST
@@ -109,9 +104,6 @@ detatched () {
 		fi
 
 		cEcho "Container stoped"
-		rm -f $SHADOW_LOCK
-		umount -l $SHADOW_DOCKER
-		cEcho "Docker unmounted"
 		umount -l $SHADOW_TMP
 		cEcho "Tmp unmounted"
 		umount -l $SHADOW_MERGED
@@ -137,16 +129,18 @@ startContainer () {
 	cEcho "Starting shadow environment..."
 	cEcho "${YELLOW}Detatch with sequence Ctrl+P, Ctrl+Q${NC}"
 
-	SHADOW_NAME=$SHADOW_PERFIX$RANDOM
-	echo $SHADOW_NAME > $SHADOW_LOCK
+	SHADOW_NAME=$SHADOW_PERFIX$RANDOM-$HOSTNAME
 
 	eEcho "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
 	docker run -it --rm --privileged \
 		-w $WORK_DIR \
 		-u `id $START_USER -u`:`id $START_USER -g` \
 		`extractGroups` \
+		-e IS_SHADOW=$SHADOW_NAME \
 		--name $SHADOW_NAME \
 		--hostname $SHADOW_NAME \
+		--cidfile $SHADOW_LOCK \
+		--tmpfs /var/lib/docker:size=2g \
 		`extractVolume $ROOT_LIST` \
 		$SHADOW_IMG "$@"
 	eEcho "\n${GREEN}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<${NC}"
@@ -276,6 +270,11 @@ upgradeShadow () {
 	exit
 }
 
+# Arg flags
+FLAG_START=""
+FLAG_CLEAN=""
+FLAG_GENERATE=""
+
 # Parse arguments:
 # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 while [[ $# -gt 0 ]]
@@ -290,13 +289,16 @@ case $key in
 	showVersion
 	;;
 	-C|--clean)
-	cleanShadow
+	FLAG_CLEAN="YES"
+	shift
 	;;
 	-s|--start)
-	startShadow
+	FLAG_START="YES"
+	shift
 	;;
 	-g|--generate)
-	generateShadowfile
+	FLAG_GENERATE="YES"
+	shift
 	;;
 	-U|--upgrade)
 	upgradeShadow
@@ -360,12 +362,16 @@ case $key in
 esac
 done
 
+if [ "$FLAG_CLEAN" ]; then cleanShadow; fi
+if [ "$FLAG_GENERATE" ]; then generateShadowfile; fi
+
 # Check if this is a shadow already
-echo $HOSTNAME | grep "^$SHADOW_PERFIX" > /dev/null
-if [ "$?" == "0" ]; then
-	cEcho "Already inside a shadow, exit"
+if [ "$IS_SHADOW" ]; then
+	cEcho "$IS_SHADOW is already inside a shadow, exit"
 	exit 1
 fi
+
+if [ "$FLAG_START" ]; then startShadow; fi
 
 # Build shadow image if not exists
 docker images | grep $SHADOW_IMG > /dev/null
