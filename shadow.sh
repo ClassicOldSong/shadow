@@ -8,7 +8,7 @@ NC="\033[0m"
 
 CMD_NAME=$0
 ROOT_LIST=`ls /`
-SHADOW_VERSION="v0.2.5"
+SHADOW_VERSION="v0.3.0"
 
 QUIET=${QUIET:=""}
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
@@ -103,6 +103,7 @@ detached () {
 			exit
 		fi
 
+		rm -f $SHADOW_LOCK
 		cEcho "Container stoped"
 		umount -l $SHADOW_TMP
 		cEcho "Tmp unmounted"
@@ -130,6 +131,7 @@ startContainer () {
 	cEcho "${YELLOW}Detach with sequence Ctrl+P, Ctrl+Q${NC}"
 
 	SHADOW_NAME=$SHADOW_PERFIX$RANDOM-$HOSTNAME
+	echo $SHADOW_NAME > $SHADOW_LOCK
 
 	eEcho "${GREEN}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>${NC}"
 	docker run -it --rm --privileged \
@@ -139,7 +141,6 @@ startContainer () {
 		-e IS_SHADOW=$SHADOW_NAME \
 		--name $SHADOW_NAME \
 		--hostname $SHADOW_NAME \
-		--cidfile $SHADOW_LOCK \
 		--tmpfs /var/lib/docker:size=2g \
 		`extractVolume $ROOT_LIST` \
 		$SHADOW_IMG "$@"
@@ -151,7 +152,7 @@ runContainer () {
 	if [ -f "$SHADOW_LOCK" ]; then
 		# Prompt script from:
 		# https://stackoverflow.com/questions/226703/how-do-i-prompt-for-yes-no-cancel-input-in-a-linux-shell-script
-		cEcho "Shadow in this dir is already running, attatch?"
+		echo -e "${CYAN}[SHADOW]${NC} Shadow in this dir is already running, attatch?"
 		select yn in "Yes" "No"; do
 			case $yn in
 				Yes ) attachContainer; break;;
@@ -185,6 +186,8 @@ showHelp () {
 | -C, --clean                  | Clear shadow env in current directory     | N/A                |
 | -s, --start                  | Start shadow env from Shadowfile          | N/A                |
 | -g, --generate               | Generate a Shadowfile                     | N/A                |
+| -S, --save                   | Save current shadow env to a tarball      | N/A                |
+| -L, --load                   | Load shadow env from a tarball            | N/A                |
 | -U, --upgrade                | Upgrade shadow to it's latest version     | N/A                |
 | -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |
 | -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |
@@ -206,8 +209,6 @@ Report bugs at https://github.com/ClassicOldSong/shadow/issues/new"
 
 # Clean current shadow env
 cleanShadow () {
-	# Refresh shadow dirs before cleaning
-	refreshDirs
 	# Set KEEP_SHADOW_ENV empty
 	KEEP_SHADOW_ENV=""
 
@@ -220,6 +221,7 @@ cleanShadow () {
 		cEcho "Stopping container..."
 		docker kill `cat $SHADOW_LOCK` > /dev/null 2> /dev/null
 	fi
+
 	detached
 	exit
 }
@@ -265,8 +267,39 @@ CMD=(\"bash\" \"-c\" \"echo \\\"Change the CMD section of the $SHADOW_FILE to yo
 }
 
 upgradeShadow () {
-	cEcho "Upgrading Shadow..."
+	echo "Upgrading Shadow..."
 	curl -L https://git.io/fAnmd | sh
+	exit
+}
+
+saveShadowEnv () {
+	if [ "$SHADOW_EXISTS" != "0" ]; then
+		cEcho "Shadow not exists, exit"
+		exit
+	fi
+
+	if [ "$1" ]; then
+		cEcho "Saving shadow env..."
+		tar cf "$1" --exclude="$SHADOW_DIR/.shadowlock" --one-file-system $SHADOW_DIR $SHADOW_FILE 2> /dev/null
+		cEcho "Shadow env saved as $1"
+	else
+		tar cf - --exclude="$SHADOW_DIR/.shadowlock" --one-file-system $SHADOW_DIR $SHADOW_FILE 2> /dev/null | cat
+	fi
+	exit
+}
+
+loadShadowEnv () {
+	LOAD_DIR=${2:-$PWD}
+
+	if [ -d "$LOAD_DIR/$SHADOW_DIR" ]; then
+		cEcho "Shadow already exists in $LOAD_DIR, clean with \"$CMD_NAME --clean\" in $LOAD_DIR and then try to load another"
+		exit
+	fi
+
+	mkdir -p $LOAD_DIR
+	cEcho "Loading shadow env..."
+	tar xf $1 -C $LOAD_DIR
+	cEcho "Shadow env loaded to $LOAD_DIR"
 	exit
 }
 
@@ -274,6 +307,8 @@ upgradeShadow () {
 FLAG_START=""
 FLAG_CLEAN=""
 FLAG_GENERATE=""
+FLAG_SAVEENV=""
+FLAG_LOADENV=""
 
 # Parse arguments:
 # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -298,6 +333,14 @@ case $key in
 	;;
 	-g|--generate)
 	FLAG_GENERATE="YES"
+	shift
+	;;
+	-S|--save)
+	FLAG_SAVEENV="YES"
+	shift
+	;;
+	-L|--load)
+	FLAG_LOADENV="YES"
 	shift
 	;;
 	-U|--upgrade)
@@ -362,8 +405,13 @@ case $key in
 esac
 done
 
+# Refresh shadow dirs
+refreshDirs
+
 if [ "$FLAG_CLEAN" ]; then cleanShadow; fi
 if [ "$FLAG_GENERATE" ]; then generateShadowfile; fi
+if [ "$FLAG_SAVEENV" ]; then saveShadowEnv "$@"; fi
+if [ "$FLAG_LOADENV" ]; then loadShadowEnv "$@"; fi
 
 # Check if this is a shadow already
 if [ "$IS_SHADOW" ]; then
@@ -391,7 +439,5 @@ if [ "$?" != "0" ]; then
 	cEcho "Build complete"
 fi
 
-# Refresh shadow dirs
-refreshDirs
 # Start container
 runContainer "$@"

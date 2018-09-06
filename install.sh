@@ -7,4 +7,4 @@ sudo cp /tmp/shadow/shadow.sh /usr/bin/shadow
 sudo chmod 755 /usr/bin/shadow
 echo "Removing tmp files..."
 rm -rf /tmp/shadow
-echo "Done!"
+echo "`shadow -v` installed!"

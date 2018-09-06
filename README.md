@@ -9,6 +9,7 @@ Run shadow clones of your system parallely with Docker
 - Bash
 - Git (Only for installation)
 - Vim (Or other editor $EDITOR sets to)
+- Tar (For saving and loading shadow env)
 
 ## Installation/Upgrade
 ```
@@ -28,6 +29,8 @@ sudo shadow [ARGS...] [CMD...]
 | -C, --clean                  | Clear shadow env in current directory     | N/A                |
 | -s, --start                  | Start shadow env from Shadowfile          | N/A                |
 | -g, --generate               | Generate a Shadowfile                     | N/A                |
+| -S, --save                   | Save current shadow env to a tarball      | N/A                |
+| -L, --load                   | Load shadow env from a tarball            | N/A                |
 | -U, --upgrade                | Upgrade shadow to it's latest version     | N/A                |
 | -q, --quiet, QUIET           | Set to disable all shadow logs            | (not set)          |
 | -k, --keep, KEEP_SHADOW_ENV  | Set to keep the shadow environment        | (not set)          |
@@ -84,6 +87,26 @@ sudo shadow [ARGS...] -s
 Start shadow from `myShadowfile`
 ```
 sudo shadow [ARGS...] -f myShadowfile -s
+```
+
+Save a shadow env
+```
+shadow -S shadowenv.tar
+```
+
+Save a shadow env with gzip
+```
+shadow -S | gzip -9 > shadowenv.tar.gz
+```
+
+Load a shadow env from a tarball to the current directory
+```
+shadow -L shadowenv.tar.gz
+```
+
+Load a shadow env from a tarball to another directory
+```
+shadow -L shadowenv.tar.gz /another/directory
 ```
 
 ## License
