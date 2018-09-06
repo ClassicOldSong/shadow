@@ -8,7 +8,7 @@ NC="\033[0m"
 
 CMD_NAME=$0
 ROOT_LIST=`ls /`
-SHADOW_VERSION="v0.2.4"
+SHADOW_VERSION="v0.2.5"
 
 QUIET=${QUIET:=""}
 KEEP_SHADOW_ENV=${KEEP_SHADOW_ENV:=""}
@@ -94,11 +94,11 @@ prepareEnv () {
 	fi
 }
 
-detatched () {
+detached () {
 	if [ -f "$SHADOW_LOCK" ]; then
 		docker top `cat $SHADOW_LOCK` > /dev/null 2> /dev/null
 		if [ "$?" == "0" ]; then
-			cEcho "Container detatched, re-enter with \"sudo shadow\" in $PWD"
+			cEcho "Container detached, re-enter with \"sudo shadow\" in $PWD"
 			cEcho "If you would like to keep the shadow env after another attach, set KEEP_SHADOW_ENV to \"YES\" to the environment virables when attaching."
 			exit
 		fi
@@ -127,7 +127,7 @@ attachContainer () {
 
 startContainer () {
 	cEcho "Starting shadow environment..."
-	cEcho "${YELLOW}Detatch with sequence Ctrl+P, Ctrl+Q${NC}"
+	cEcho "${YELLOW}Detach with sequence Ctrl+P, Ctrl+Q${NC}"
 
 	SHADOW_NAME=$SHADOW_PERFIX$RANDOM-$HOSTNAME
 
@@ -163,8 +163,8 @@ runContainer () {
 		startContainer "$@"
 	fi
 
-	# Run detatched after all kinds of attachment
-	detatched
+	# Run detached after all kinds of attachment
+	detached
 }
 
 # Args
@@ -220,7 +220,7 @@ cleanShadow () {
 		cEcho "Stopping container..."
 		docker kill `cat $SHADOW_LOCK` > /dev/null 2> /dev/null
 	fi
-	detatched
+	detached
 	exit
 }
 

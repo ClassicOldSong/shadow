@@ -66,7 +66,7 @@ Run some dangerous commands without actually hurting your system
 sudo shadow rm -rf / --no-preserve-root
 ```
 
-Keep environment after container detatched
+Keep environment after container detached
 ```
 sudo shadow --keep [CMD...]
 ```
